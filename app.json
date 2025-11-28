@@ -1,0 +1,19 @@
+{
+  "name": "OSM Finder",
+  "description": "Busca lugares usando OpenStreetMap y Overpass API. Encuentra cafeterías, parques, bibliotecas y más cerca de cualquier ubicación.",
+  "version": "1.0.0",
+  "author": "amayaeguizabal7",
+  "homepage": "https://github.com/amayaeguizabal7/app-chatgpt",
+  "mcp_servers": {
+    "osm-finder": {
+      "command": "python",
+      "args": ["mcp_server_python/main.py"],
+      "env": {}
+    }
+  },
+  "ui": {
+    "type": "iframe",
+    "url": "http://localhost:3000"
+  }
+}
+
