@@ -44,12 +44,17 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           />
         </div>
 
-        <div className="search-field">
-          <label htmlFor="location">Ubicación</label>
+        <div className="search-field location-field">
+          <label htmlFor="location">
+            Ubicación
+            <span className="field-hint" title="Formato recomendado: Calle, Número, Ciudad, Código Postal, País">
+              ℹ️
+            </span>
+          </label>
           <input
             id="location"
             type="text"
-            placeholder="Ej: Plaza de España, Madrid"
+            placeholder="Ej: Calle Gran Vía 1, Madrid, 28013, España"
             value={searchParams.location_text || ''}
             onChange={(e) => onSearchChange({ location_text: e.target.value })}
             onKeyPress={(e) => {
@@ -59,6 +64,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
             }}
             disabled={status === 'loading'}
           />
+          <div className="location-examples">
+            <small>
+              <strong>Ejemplo:</strong> "Calle Mayor 5, Madrid" o "Falces, Navarra"
+            </small>
+          </div>
         </div>
 
         <div className="search-field">

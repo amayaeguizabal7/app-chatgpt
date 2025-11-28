@@ -1,72 +1,122 @@
 .app-container {
-  display: flex;
-  flex-direction: column;
   height: 100vh;
   width: 100%;
   background-color: #ffffff;
+  overflow: hidden;
 }
 
-.app-header {
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.app-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
 }
 
-.app-header h1 {
+/* Panel izquierdo: Controles y resultados */
+.left-panel {
+  width: 400px;
+  min-width: 350px;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  background-color: hsl(0, 0%, 100%);
+  border-right: 1px solid hsl(214.3, 31.8%, 91.4%);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  background: linear-gradient(135deg, hsl(222.2, 47.4%, 11.2%) 0%, hsl(221.2, 83.2%, 53.3%) 100%);
+  color: hsl(210, 40%, 98%);
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.panel-header h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
 }
 
-.app-header p {
+.panel-header p {
   margin: 0.25rem 0 0 0;
   font-size: 0.9rem;
   opacity: 0.9;
 }
 
-.app-content {
+.panel-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
   overflow: hidden;
 }
 
-.search-section {
-  padding: 1rem 2rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.results-section {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.map-container {
+/* Panel derecho: Mapa */
+.right-panel {
   flex: 1;
   position: relative;
   min-width: 0;
+  background-color: #f5f5f5;
 }
 
-.list-container {
-  width: 350px;
-  border-left: 1px solid #e9ecef;
+/* Ajustes para el SearchPanel en el nuevo layout */
+.left-panel .search-panel {
+  padding: 1.5rem;
+  background-color: hsl(0, 0%, 100%);
+  border-bottom: 1px solid hsl(214.3, 31.8%, 91.4%);
+  flex-shrink: 0;
+}
+
+.left-panel .search-row {
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.left-panel .search-field {
+  min-width: 100%;
+}
+
+.left-panel .search-button {
+  width: 100%;
+}
+
+/* Ajustes para ResultsList en el nuevo layout */
+.left-panel .results-list {
+  flex: 1;
   overflow-y: auto;
-  background-color: #ffffff;
+  padding: 0;
+}
+
+.left-panel .results-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: hsl(0, 0%, 100%);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .left-panel {
+    width: 350px;
+    min-width: 300px;
+  }
 }
 
 @media (max-width: 768px) {
-  .results-section {
+  .app-layout {
     flex-direction: column;
   }
 
-  .list-container {
+  .left-panel {
     width: 100%;
-    max-height: 300px;
-    border-left: none;
-    border-top: 1px solid #e9ecef;
+    max-width: 100%;
+    max-height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .right-panel {
+    flex: 1;
+    min-height: 50vh;
   }
 }
 

@@ -6,18 +6,24 @@ import MapView from './components/MapView';
 import SearchPanel from './components/SearchPanel';
 import ResultsList from './components/ResultsList';
 import { SearchParams, SearchResults, Place, SearchStatus } from './types';
+import { searchPlaces as searchPlacesDirect } from './services/overpassService';
 import './App.css';
 
-// Hook personalizado para el SDK (ajusta según la API real del SDK)
+// Hook personalizado para el SDK (modo demo para visualización local)
 function useChatGPTAppSDK() {
-  // Esta es una implementación de ejemplo
-  // Reemplaza con la API real del SDK cuando esté disponible
   const [app, setApp] = useState<any>(null);
 
   useEffect(() => {
-    // Inicializar el SDK cuando esté disponible
-    if (typeof window !== 'undefined' && (window as any).chatgptApp) {
-      setApp((window as any).chatgptApp);
+    // Para modo demo local, no necesitamos el SDK real
+    // El código usará directamente Overpass API
+    if (typeof window !== 'undefined') {
+      // Si el SDK está disponible (cuando se ejecuta en ChatGPT), lo usamos
+      if ((window as any).chatgptApp) {
+        setApp((window as any).chatgptApp);
+      } else {
+        // En modo demo, retornamos null y el código usará Overpass directamente
+        setApp(null);
+      }
     }
   }, []);
 
@@ -59,7 +65,7 @@ function App() {
   }, [app]);
 
   /**
-   * Realiza una búsqueda llamando a la herramienta MCP search_places
+   * Realiza una búsqueda llamando a la herramienta MCP search_places o directamente a Overpass
    */
   const performSearch = async (params: SearchParams) => {
     setStatus('loading');
@@ -67,49 +73,54 @@ function App() {
     setSelectedPlace(null);
 
     try {
-      // Llamar a la herramienta MCP
-      // Ajusta esto según la API real del SDK de OpenAI Apps
-      let result;
+      let results: SearchResults;
+
+      // Intentar usar el SDK de ChatGPT si está disponible
       if (app && app.callTool) {
-        result = await app.callTool('search_places', {
+        const result = await app.callTool('search_places', {
           query: params.query,
           lat: params.lat,
           lng: params.lng,
           location_text: params.location_text,
           radius_meters: params.radius_meters,
         });
+
+        if (!result || !result.content) {
+          throw new Error('No se recibió respuesta del servidor MCP');
+        }
+
+        const content = result.content[0];
+        if (content.type !== 'text') {
+          throw new Error('Respuesta inesperada del servidor');
+        }
+
+        const text = content.text;
+        const jsonMatch = text.match(/--- DATOS JSON PARA EL WIDGET ---\n([\s\S]*)$/);
+        if (!jsonMatch) {
+          throw new Error('No se encontraron datos JSON en la respuesta');
+        }
+
+        results = JSON.parse(jsonMatch[1]);
       } else {
-        // Fallback: llamar directamente a la API si el SDK no está disponible
-        // Esto es solo para desarrollo/testing
-        throw new Error('SDK no disponible. Ejecuta la app dentro de ChatGPT.');
+        // Modo demo: llamar directamente a Overpass API
+        console.log('Usando modo demo - llamando directamente a Overpass API');
+        results = await searchPlacesDirect(
+          params.query,
+          params.lat,
+          params.lng,
+          params.location_text,
+          params.radius_meters
+        );
       }
 
-      if (!result || !result.content) {
-        throw new Error('No se recibió respuesta del servidor MCP');
-      }
-
-      // Parsear la respuesta
-      // El servidor MCP devuelve JSON en el texto
-      const content = result.content[0];
-      if (content.type !== 'text') {
-        throw new Error('Respuesta inesperada del servidor');
-      }
-
-      const text = content.text;
-      
-      // Extraer el JSON de la respuesta
-      const jsonMatch = text.match(/--- DATOS JSON PARA EL WIDGET ---\n([\s\S]*)$/);
-      if (!jsonMatch) {
-        throw new Error('No se encontraron datos JSON en la respuesta');
-      }
-
-      const results: SearchResults = JSON.parse(jsonMatch[1]);
       setSearchResults(results);
       setStatus('success');
 
-      // Si hay resultados, centrar el mapa en el primer lugar o en el centro
-      if (results.places.length > 0 && results.center) {
-        // El mapa se centrará automáticamente cuando cambien los resultados
+      if (results.places.length === 0) {
+        setStatus('success');
+        setErrorMessage(
+          `No se encontraron lugares de tipo '${params.query}' en un radio de ${params.radius_meters}m. Intenta ampliar el radio o cambiar el tipo de lugar.`
+        );
       }
 
     } catch (error) {
@@ -156,38 +167,23 @@ function App() {
 
   return (
     <div className="app-container">
-      <div className="app-header">
-        <h1>🗺️ OSM Finder</h1>
-        <p>Busca lugares usando OpenStreetMap</p>
-      </div>
-
-      <div className="app-content">
-        <div className="search-section">
-          <SearchPanel
-            searchParams={searchParams}
-            onSearchChange={handleSearchChange}
-            onSearch={handleSearch}
-            status={status}
-            errorMessage={errorMessage}
-          />
-        </div>
-
-        <div className="results-section">
-          <div className="map-container">
-            <MapView
-              places={searchResults?.places || []}
-              center={
-                searchResults?.center || 
-                (searchParams.lat && searchParams.lng
-                  ? { lat: searchParams.lat, lng: searchParams.lng }
-                  : undefined)
-              }
-              selectedPlace={selectedPlace}
-              onPlaceSelect={handlePlaceSelect}
-            />
+      <div className="app-layout">
+        {/* Panel izquierdo: Controles y resultados */}
+        <div className="left-panel">
+          <div className="panel-header">
+            <h1>🗺️ OSM Finder</h1>
+            <p>Busca lugares usando OpenStreetMap</p>
           </div>
 
-          <div className="list-container">
+          <div className="panel-content">
+            <SearchPanel
+              searchParams={searchParams}
+              onSearchChange={handleSearchChange}
+              onSearch={handleSearch}
+              status={status}
+              errorMessage={errorMessage}
+            />
+
             <ResultsList
               places={searchResults?.places || []}
               selectedPlace={selectedPlace}
@@ -196,6 +192,21 @@ function App() {
               errorMessage={errorMessage}
             />
           </div>
+        </div>
+
+        {/* Panel derecho: Mapa */}
+        <div className="right-panel">
+          <MapView
+            places={searchResults?.places || []}
+            center={
+              searchResults?.center || 
+              (searchParams.lat && searchParams.lng
+                ? { lat: searchParams.lat, lng: searchParams.lng }
+                : undefined)
+            }
+            selectedPlace={selectedPlace}
+            onPlaceSelect={handlePlaceSelect}
+          />
         </div>
       </div>
     </div>

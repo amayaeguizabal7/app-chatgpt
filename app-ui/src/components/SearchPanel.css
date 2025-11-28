@@ -1,109 +1,135 @@
 .search-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  width: 100%;
 }
 
 .search-row {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  align-items: flex-end;
-  flex-wrap: wrap;
 }
 
 .search-field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  flex: 1;
-  min-width: 200px;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .search-field label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #495057;
+  color: hsl(222.2, 84%, 4.9%);
+  line-height: 1.25rem;
 }
 
 .search-field input,
 .search-field select {
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: border-color 0.2s;
+  display: flex;
+  height: 2.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid hsl(214.3, 31.8%, 91.4%);
+  border-radius: 0.375rem;
+  background-color: hsl(0, 0%, 100%);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.search-field input::placeholder {
+  color: hsl(215.4, 16.3%, 46.9%);
 }
 
 .search-field input:focus,
 .search-field select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  border-color: hsl(221.2, 83.2%, 53.3%);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .search-field input:disabled,
 .search-field select:disabled {
-  background-color: #e9ecef;
+  opacity: 0.5;
   cursor: not-allowed;
+  background-color: hsl(210, 40%, 96.1%);
+}
+
+.field-hint {
+  margin-left: 0.25rem;
+  color: hsl(221.2, 83.2%, 53.3%);
+  cursor: help;
+  font-size: 0.875rem;
+}
+
+.location-examples {
+  margin-top: 0.25rem;
+  padding: 0.75rem;
+  background-color: hsl(210, 40%, 98%);
+  border: 1px solid hsl(214.3, 31.8%, 91.4%);
+  border-radius: 0.375rem;
+  border-left: 3px solid hsl(221.2, 83.2%, 53.3%);
+}
+
+.location-examples small {
+  color: hsl(215.4, 16.3%, 46.9%);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  display: block;
 }
 
 .search-button {
-  padding: 0.5rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background-color: hsl(222.2, 47.4%, 11.2%);
+  color: hsl(210, 40%, 98%);
   border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-  white-space: nowrap;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .search-button:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background-color: hsl(222.2, 47.4%, 8.2%);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .search-button:active:not(:disabled) {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 .search-button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .error-message {
-  padding: 0.75rem;
-  background-color: #fee;
-  border: 1px solid #fcc;
-  border-radius: 4px;
-  color: #c33;
+  padding: 0.75rem 1rem;
+  background-color: hsl(0, 100%, 97%);
+  border: 1px solid hsl(0, 84.2%, 60.2%);
+  border-radius: 0.375rem;
+  color: hsl(0, 72.2%, 50.6%);
   font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 .coordinates-info {
-  padding: 0.5rem;
-  background-color: #e7f3ff;
-  border: 1px solid #b3d9ff;
-  border-radius: 4px;
-  color: #0066cc;
-  font-size: 0.8rem;
-  font-family: monospace;
+  padding: 0.5rem 0.75rem;
+  background-color: hsl(214.3, 100%, 97%);
+  border: 1px solid hsl(214.3, 95%, 88%);
+  border-radius: 0.375rem;
+  color: hsl(221.2, 83.2%, 53.3%);
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  line-height: 1.5;
 }
-
-@media (max-width: 768px) {
-  .search-row {
-    flex-direction: column;
-  }
-
-  .search-field {
-    min-width: 100%;
-  }
-
-  .search-button {
-    width: 100%;
-  }
-}
-
