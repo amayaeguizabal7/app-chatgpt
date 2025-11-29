@@ -5,15 +5,10 @@
   "author": "amayaeguizabal7",
   "homepage": "https://github.com/amayaeguizabal7/app-chatgpt",
   "mcp_servers": {
-    "osm-finder": {
-      "command": "python",
-      "args": ["mcp_server_python/main.py"],
+    "mysherlock": {
+      "url": "https://mysherlock-mcp.onrender.com/mcp",
       "env": {}
     }
-  },
-  "ui": {
-    "type": "iframe",
-    "url": "http://localhost:3000"
   }
 }
 

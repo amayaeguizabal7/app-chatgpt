@@ -1,0 +1,4 @@
+# Requirements principales para el servidor
+# Este archivo es para compatibilidad con el patrón del proyecto de referencia
+# Las dependencias reales están en mcp_server_python/requirements.txt
+

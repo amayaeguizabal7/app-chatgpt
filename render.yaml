@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mysherlock-mcp
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt &&
+      cd app-ui && npm install && npm run build &&
+      cd .. && pip install -r mcp_server_python/requirements.txt
+    startCommand: gunicorn mcp_server_python.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: PYTHON_VERSION
+        value: 3.11.0
+

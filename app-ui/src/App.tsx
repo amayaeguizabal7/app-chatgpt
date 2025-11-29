@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// Importar el SDK de OpenAI Apps
-// Nota: La API exacta puede variar según la versión del SDK
-// Ajusta estos imports según la documentación oficial del SDK
 import MapView from './components/MapView';
 import SearchPanel from './components/SearchPanel';
 import ResultsList from './components/ResultsList';
@@ -9,60 +6,58 @@ import { SearchParams, SearchResults, Place, SearchStatus } from './types';
 import { searchPlaces as searchPlacesDirect } from './services/overpassService';
 import './App.css';
 
-// Hook personalizado para el SDK (modo demo para visualización local)
-function useChatGPTAppSDK() {
-  const [app, setApp] = useState<any>(null);
-
-  useEffect(() => {
-    // Para modo demo local, no necesitamos el SDK real
-    // El código usará directamente Overpass API
-    if (typeof window !== 'undefined') {
-      // Si el SDK está disponible (cuando se ejecuta en ChatGPT), lo usamos
-      if ((window as any).chatgptApp) {
-        setApp((window as any).chatgptApp);
-      } else {
-        // En modo demo, retornamos null y el código usará Overpass directamente
-        setApp(null);
-      }
-    }
-  }, []);
-
-  return app;
+// Tipos para el SDK de OpenAI Apps
+declare global {
+  interface Window {
+    openai?: {
+      toolOutput?: {
+        searchResults?: SearchResults;
+      };
+      callTool?: (toolName: string, args: any) => Promise<any>;
+    };
+  }
 }
 
 function App() {
-  const app = useChatGPTAppSDK();
   const [searchParams, setSearchParams] = useState<SearchParams>({
     query: '',
     radius_meters: 1000,
   });
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
+  
+  // Inicializar searchResults desde toolOutput si está disponible
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(() => {
+    if (typeof window !== 'undefined' && window.openai?.toolOutput?.searchResults) {
+      return window.openai.toolOutput.searchResults;
+    }
+    return null;
+  });
+  
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [status, setStatus] = useState<SearchStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  // Escuchar mensajes del modelo de ChatGPT
+  // Escuchar eventos de ChatGPT para actualizar los datos
   useEffect(() => {
-    if (!app) return;
-
-    // Ajusta esto según la API real del SDK
-    // El SDK puede proporcionar eventos o métodos diferentes
-    const handleMessage = async (message: any) => {
-      // El modelo puede enviar parámetros de búsqueda directamente
-      if (message.type === 'search_params') {
-        setSearchParams(message.params);
-        await performSearch(message.params);
+    const handleSetGlobals = (event: CustomEvent) => {
+      const globals = event.detail?.globals;
+      if (globals?.toolOutput?.searchResults) {
+        setSearchResults(globals.toolOutput.searchResults);
+        setStatus('success');
+        if (globals.toolOutput.searchResults.places.length === 0) {
+          setErrorMessage(
+            `No se encontraron lugares de tipo '${globals.toolOutput.searchResults.query}' en un radio de ${globals.toolOutput.searchResults.radius_meters}m.`
+          );
+        }
       }
     };
 
-    // Ajusta según la API real del SDK
-    if (app.on) {
-      app.on('message', handleMessage);
-      return () => {
-        app.off('message', handleMessage);
-      };
-    }
-  }, [app]);
+    // Escuchar eventos de OpenAI
+    window.addEventListener('openai:set_globals', handleSetGlobals as EventListener);
+    
+    return () => {
+      window.removeEventListener('openai:set_globals', handleSetGlobals as EventListener);
+    };
+  }, []);
 
   /**
    * Realiza una búsqueda llamando a la herramienta MCP search_places o directamente a Overpass
@@ -76,31 +71,47 @@ function App() {
       let results: SearchResults;
 
       // Intentar usar el SDK de ChatGPT si está disponible
-      if (app && app.callTool) {
-        const result = await app.callTool('search_places', {
-          query: params.query,
-          lat: params.lat,
-          lng: params.lng,
-          location_text: params.location_text,
-          radius_meters: params.radius_meters,
-        });
+      if (window.openai?.callTool) {
+        try {
+          const result = await window.openai.callTool('search_places', {
+            query: params.query,
+            lat: params.lat,
+            lng: params.lng,
+            location_text: params.location_text,
+            radius_meters: params.radius_meters,
+          });
 
-        if (!result || !result.content) {
-          throw new Error('No se recibió respuesta del servidor MCP');
+          // El resultado puede venir en structuredContent
+          if (result?.structuredContent?.searchResults) {
+            results = result.structuredContent.searchResults;
+          } else if (result?.content) {
+            // Buscar en el contenido
+            const textContent = result.content.find((c: any) => c.type === 'text');
+            if (textContent?.text) {
+              // Intentar parsear JSON si está en el texto
+              const jsonMatch = textContent.text.match(/--- DATOS JSON PARA EL WIDGET ---\n([\s\S]*)$/);
+              if (jsonMatch) {
+                results = JSON.parse(jsonMatch[1]);
+              } else {
+                throw new Error('No se encontraron datos en la respuesta');
+              }
+            } else {
+              throw new Error('Respuesta inesperada del servidor');
+            }
+          } else {
+            throw new Error('No se recibió respuesta del servidor MCP');
+          }
+        } catch (toolError) {
+          console.warn('Error llamando a la herramienta, usando modo directo:', toolError);
+          // Fallback a modo directo
+          results = await searchPlacesDirect(
+            params.query,
+            params.lat,
+            params.lng,
+            params.location_text,
+            params.radius_meters
+          );
         }
-
-        const content = result.content[0];
-        if (content.type !== 'text') {
-          throw new Error('Respuesta inesperada del servidor');
-        }
-
-        const text = content.text;
-        const jsonMatch = text.match(/--- DATOS JSON PARA EL WIDGET ---\n([\s\S]*)$/);
-        if (!jsonMatch) {
-          throw new Error('No se encontraron datos JSON en la respuesta');
-        }
-
-        results = JSON.parse(jsonMatch[1]);
       } else {
         // Modo demo: llamar directamente a Overpass API
         console.log('Usando modo demo - llamando directamente a Overpass API');
