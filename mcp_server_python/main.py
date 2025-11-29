@@ -16,9 +16,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-# Agregar el directorio src al path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Agregar el directorio mcp_server_python al path para que los imports funcionen
+mcp_server_dir = os.path.dirname(os.path.abspath(__file__))
+if mcp_server_dir not in sys.path:
+    sys.path.insert(0, mcp_server_dir)
 
+# Importar los módulos
 from src.overpass_client import OverpassClient
 from src.nominatim_client import NominatimClient
 
@@ -42,7 +45,11 @@ app.add_middleware(
 )
 
 # Rutas para el directorio de trabajo
-BASE_DIR = Path(__file__).parent.parent
+# Si estamos en mcp_server_python/, subir un nivel; si no, estamos en la raíz
+if Path(__file__).parent.name == 'mcp_server_python':
+    BASE_DIR = Path(__file__).parent.parent
+else:
+    BASE_DIR = Path(__file__).parent
 WIDGET_DIR = BASE_DIR / "app-ui" / "dist"
 WIDGET_HTML = WIDGET_DIR / "index.html"
 
