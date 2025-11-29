@@ -10,12 +10,12 @@ Cuando crees el servicio en Render.com, usa estas configuraciones exactas:
 
 **Build Command:**
 ```bash
-pip install -r requirements.txt && cd app-ui && npm install && npm run build && cd .. && pip install -r mcp_server_python/requirements.txt
+cd app-ui && npm install && npm run build && cd .. && pip install -r mcp_server_python/requirements.txt
 ```
 
 **Start Command:**
 ```bash
-gunicorn mcp_server_python.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+uvicorn mcp_server_python.main:app --host 0.0.0.0 --port $PORT
 ```
 
 **Health Check Path:**
