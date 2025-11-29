@@ -66,7 +66,7 @@ cd app-ui && npm install && npm run build && cd .. && pip install -r mcp_server_
 **Start Command:**
 Copia y pega exactamente esto:
 ```bash
-uvicorn mcp_server_python.main:app --host 0.0.0.0 --port $PORT
+cd mcp_server_python && uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
 **Auto-Deploy:**
