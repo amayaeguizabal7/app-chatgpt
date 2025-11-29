@@ -254,6 +254,7 @@ async def mcp_endpoint(request: Dict[str, Any]):
             else:
                 raise ValueError(f"Herramienta desconocida: {tool_name}")
             
+            # La respuesta debe incluir el formato correcto para ChatGPT
             return {
                 "jsonrpc": "2.0",
                 "id": request.get("id"),
@@ -333,12 +334,9 @@ async def handle_search_places(arguments: Dict[str, Any]) -> Dict[str, Any]:
         
         # Devolver widget como recurso con datos
         # El formato debe coincidir con el proyecto de referencia
+        # ChatGPT espera el recurso con la URI que coincide con outputTemplate en metadata
         return {
             "content": [
-                {
-                    "type": "text",
-                    "text": summary
-                },
                 {
                     "type": "resource",
                     "resource": {
