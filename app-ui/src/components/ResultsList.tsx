@@ -152,12 +152,6 @@ function getPlaceDescription(place: Place): string {
     'pet': 'Tienda de mascotas',
     
     // Building types (especialmente para lugares de culto)
-    'church': 'Iglesia',
-    'cathedral': 'Catedral',
-    'chapel': 'Capilla',
-    'mosque': 'Mezquita',
-    'synagogue': 'Sinagoga',
-    'temple': 'Templo',
     'shrine': 'Santuario',
     'monastery': 'Monasterio',
     'convent': 'Convento',

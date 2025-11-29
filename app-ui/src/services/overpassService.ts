@@ -33,7 +33,7 @@ export interface SearchResults {
  * Geocodifica una dirección usando Nominatim
  * Intenta múltiples variaciones de la dirección si la primera falla
  */
-async function tryGeocode(locationText: string, params: URLSearchParams): Promise<any> {
+async function tryGeocode(_locationText: string, params: URLSearchParams): Promise<any> {
   const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
   
   const response = await fetch(url, {
