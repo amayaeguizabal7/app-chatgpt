@@ -24,10 +24,17 @@ function App() {
     radius_meters: 1000,
   });
   
-  // Inicializar searchResults desde toolOutput si está disponible
+  // Inicializar searchResults desde toolOutput o datos inyectados
   const [searchResults, setSearchResults] = useState<SearchResults | null>(() => {
-    if (typeof window !== 'undefined' && window.openai?.toolOutput?.searchResults) {
-      return window.openai.toolOutput.searchResults;
+    if (typeof window !== 'undefined') {
+      // Prioridad 1: toolOutput del SDK
+      if (window.openai?.toolOutput?.searchResults) {
+        return window.openai.toolOutput.searchResults;
+      }
+      // Prioridad 2: datos inyectados directamente en el HTML
+      if ((window as any).__MYSHERLOCK_SEARCH_RESULTS__) {
+        return (window as any).__MYSHERLOCK_SEARCH_RESULTS__;
+      }
     }
     return null;
   });
@@ -53,6 +60,18 @@ function App() {
 
     // Escuchar eventos de OpenAI
     window.addEventListener('openai:set_globals', handleSetGlobals as EventListener);
+    
+    // También verificar si hay datos inyectados directamente
+    if (typeof window !== 'undefined' && (window as any).__MYSHERLOCK_SEARCH_RESULTS__) {
+      const injectedData = (window as any).__MYSHERLOCK_SEARCH_RESULTS__;
+      setSearchResults(injectedData);
+      setStatus('success');
+      if (injectedData.places && injectedData.places.length === 0) {
+        setErrorMessage(
+          `No se encontraron lugares de tipo '${injectedData.query}' en un radio de ${injectedData.radius_meters}m.`
+        );
+      }
+    }
     
     return () => {
       window.removeEventListener('openai:set_globals', handleSetGlobals as EventListener);

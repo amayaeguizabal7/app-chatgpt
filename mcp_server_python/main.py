@@ -54,15 +54,48 @@ WIDGET_DIR = BASE_DIR / "app-ui" / "dist"
 WIDGET_HTML = WIDGET_DIR / "index.html"
 
 
-def load_widget_html() -> str:
-    """Carga el HTML del widget compilado."""
+def load_widget_html(search_results: Dict[str, Any] = None) -> str:
+    """Carga el HTML del widget compilado e inyecta los datos si se proporcionan."""
     try:
         if WIDGET_HTML.exists():
             with open(WIDGET_HTML, "r", encoding="utf-8") as f:
                 html = f.read()
-            # Reemplazar rutas relativas por absolutas si es necesario
-            html = html.replace('href="/', 'href="./')
-            html = html.replace('src="/', 'src="./')
+            
+            # Obtener la URL base del servidor (para producción)
+            import os
+            server_url = os.getenv("RENDER_EXTERNAL_URL", "https://mysherlock-mcp.onrender.com")
+            
+            # Reemplazar rutas absolutas por rutas relativas o con URL base
+            # Para que funcionen cuando se inyecta como recurso
+            html = html.replace('href="/assets/', f'href="{server_url}/assets/')
+            html = html.replace('src="/assets/', f'src="{server_url}/assets/')
+            html = html.replace('href="/vite.svg', f'href="{server_url}/vite.svg')
+            
+            # Si hay datos de búsqueda, inyectarlos en el HTML para que el widget los pueda usar
+            if search_results:
+                import json
+                data_script = f"""
+<script>
+  // Inyectar datos de búsqueda en el widget
+  window.__MYSHERLOCK_SEARCH_RESULTS__ = {json.dumps(search_results, ensure_ascii=False)};
+  
+  // Configurar toolOutput para el SDK de OpenAI Apps
+  if (typeof window !== 'undefined') {{
+    window.openai = window.openai || {{}};
+    window.openai.toolOutput = window.openai.toolOutput || {{}};
+    window.openai.toolOutput.searchResults = {json.dumps(search_results, ensure_ascii=False)};
+  }}
+</script>
+"""
+                # Insertar el script antes del cierre de </head> o al inicio de <body>
+                if '</head>' in html:
+                    html = html.replace('</head>', data_script + '</head>')
+                elif '<body>' in html:
+                    html = html.replace('<body>', '<body>' + data_script)
+                else:
+                    # Si no hay head ni body, añadir al inicio
+                    html = data_script + html
+            
             return html
         else:
             logger.warning(f"Widget HTML no encontrado en {WIDGET_HTML}")
@@ -265,8 +298,8 @@ async def handle_search_places(arguments: Dict[str, Any]) -> Dict[str, Any]:
             } if places else None
         }
         
-        # Cargar widget HTML
-        widget_html = load_widget_html()
+        # Cargar widget HTML con los datos inyectados
+        widget_html = load_widget_html(search_results)
         
         # Crear resumen de texto
         if not places:
