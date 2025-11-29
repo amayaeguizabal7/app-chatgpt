@@ -174,6 +174,11 @@ async def mcp_endpoint(request: Dict[str, Any]):
                                 "Puedes proporcionar coordenadas (lat/lng) o un texto de ubicación (location_text). "
                                 "Si solo proporcionas location_text, se geocodificará automáticamente."
                             ),
+                            "metadata": {
+                                "outputTemplate": "ui://widget/mysherlock.html",
+                                "invokingMessage": "Buscando lugares...",
+                                "invokedMessage": "Búsqueda completada"
+                            },
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
@@ -220,6 +225,10 @@ async def mcp_endpoint(request: Dict[str, Any]):
                                 "Convierte coordenadas (latitud, longitud) en una dirección legible "
                                 "usando geocodificación inversa de OpenStreetMap."
                             ),
+                            "metadata": {
+                                "invokingMessage": "Obteniendo dirección...",
+                                "invokedMessage": "Dirección obtenida"
+                            },
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
@@ -323,6 +332,7 @@ async def handle_search_places(arguments: Dict[str, Any]) -> Dict[str, Any]:
             summary = "\n".join(summary_lines)
         
         # Devolver widget como recurso con datos
+        # El formato debe coincidir con el proyecto de referencia
         return {
             "content": [
                 {
@@ -339,13 +349,7 @@ async def handle_search_places(arguments: Dict[str, Any]) -> Dict[str, Any]:
                 }
             ],
             "structuredContent": {
-                "searchResults": search_results,
-                "_meta": {
-                    "openai/outputTemplate": {
-                        "type": "resource",
-                        "resource": "ui://widget/mysherlock.html"
-                    }
-                }
+                "searchResults": search_results
             }
         }
     
