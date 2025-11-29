@@ -335,7 +335,7 @@ async def handle_search_places(arguments: Dict[str, Any]) -> Dict[str, Any]:
         # Devolver widget como recurso con datos
         # El formato debe coincidir con el proyecto de referencia
         # ChatGPT espera el recurso con la URI que coincide con outputTemplate en metadata
-        # El recurso debe ser el primer elemento en content para que ChatGPT lo muestre
+        # IMPORTANTE: El recurso debe tener exactamente la misma URI que el outputTemplate
         return {
             "content": [
                 {
@@ -345,10 +345,6 @@ async def handle_search_places(arguments: Dict[str, Any]) -> Dict[str, Any]:
                         "mimeType": "text/html+skybridge",
                         "text": widget_html
                     }
-                },
-                {
-                    "type": "text",
-                    "text": summary
                 }
             ],
             "structuredContent": {
