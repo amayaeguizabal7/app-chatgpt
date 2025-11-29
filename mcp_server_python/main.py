@@ -122,7 +122,7 @@ async def mcp_endpoint(request: Dict[str, Any]):
             # Es una notificación, no requiere respuesta
             return {
                 "jsonrpc": "2.0",
-                "id": request.get("id"),
+                "id": request.get("id") if request.get("id") is not None else None,
                 "result": {}
             }
         
@@ -216,32 +216,6 @@ async def mcp_endpoint(request: Dict[str, Any]):
                 "jsonrpc": "2.0",
                 "id": request.get("id"),
                 "result": result
-            }
-        
-        # Método initialize - requerido por el protocolo MCP
-        elif method == "initialize":
-            return {
-                "jsonrpc": "2.0",
-                "id": request.get("id"),
-                "result": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {}
-                    },
-                    "serverInfo": {
-                        "name": "mysherlock-mcp",
-                        "version": "1.0.0"
-                    }
-                }
-            }
-        
-        # Método initialized - notificación después de initialize
-        elif method == "initialized":
-            # Es una notificación, no requiere respuesta
-            return {
-                "jsonrpc": "2.0",
-                "id": request.get("id") if request.get("id") is not None else None,
-                "result": {}
             }
         
         else:
