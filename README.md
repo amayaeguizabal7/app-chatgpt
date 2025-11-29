@@ -1,6 +1,6 @@
-# OSM Finder - ChatGPT App
+# MySherlock 🔎 - ChatGPT App
 
-Aplicación completa de ChatGPT para buscar lugares usando **OpenStreetMap** y **Overpass API**. Permite buscar cafeterías, parques, bibliotecas, museos y otros lugares cerca de cualquier ubicación, mostrándolos en un mapa interactivo.
+**Voy a tener suerte** - Aplicación completa de ChatGPT para buscar lugares usando **OpenStreetMap** y **Overpass API**. Permite buscar cafeterías, parques, bibliotecas, museos y otros lugares cerca de cualquier ubicación, mostrándolos en un mapa interactivo.
 
 ## 🎯 Características
 
@@ -245,4 +245,4 @@ Este proyecto está bajo la licencia MIT.
 
 ---
 
-**¡Disfruta buscando lugares con OSM Finder! 🗺️✨**
+**¡Disfruta buscando lugares con MySherlock 🔎! ✨**

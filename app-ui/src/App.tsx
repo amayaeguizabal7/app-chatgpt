@@ -171,8 +171,8 @@ function App() {
         {/* Panel izquierdo: Controles y resultados */}
         <div className="left-panel">
           <div className="panel-header">
-            <h1>🗺️ OSM Finder</h1>
-            <p>Busca lugares usando OpenStreetMap</p>
+            <h1>MySherlock 🔎</h1>
+            <p>Voy a tener suerte</p>
           </div>
 
           <div className="panel-content">

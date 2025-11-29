@@ -1,6 +1,6 @@
-# OSM Finder - Frontend
+# MySherlock 🔎 - Frontend
 
-Frontend React/TypeScript para la aplicación OSM Finder.
+Frontend React/TypeScript para la aplicación MySherlock 🔎.
 
 ## Instalación
 

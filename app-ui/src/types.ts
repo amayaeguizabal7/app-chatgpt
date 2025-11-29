@@ -1,5 +1,5 @@
 /**
- * Tipos TypeScript para la aplicación OSM Finder
+ * Tipos TypeScript para la aplicación MySherlock 🔎
  */
 
 export interface Place {

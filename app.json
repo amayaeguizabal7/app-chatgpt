@@ -1,6 +1,6 @@
 {
-  "name": "OSM Finder",
-  "description": "Busca lugares usando OpenStreetMap y Overpass API. Encuentra cafeterías, parques, bibliotecas y más cerca de cualquier ubicación.",
+  "name": "MySherlock 🔎",
+  "description": "Voy a tener suerte - Busca lugares usando OpenStreetMap y Overpass API. Encuentra cafeterías, parques, bibliotecas y más cerca de cualquier ubicación.",
   "version": "1.0.0",
   "author": "amayaeguizabal7",
   "homepage": "https://github.com/amayaeguizabal7/app-chatgpt",
