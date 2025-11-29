@@ -126,3 +126,4 @@ class NominatimClient:
             logger.error(f"Error en reverse geocode: {e}")
             return None
 
+

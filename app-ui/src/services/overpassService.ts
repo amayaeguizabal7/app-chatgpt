@@ -10,6 +10,7 @@ export interface Place {
   type: string;
   tags: Record<string, string>;
   address?: string;
+  phone?: string;
   osm_id: number;
   osm_type: string;
   osm_url: string;
@@ -185,6 +186,80 @@ export async function geocodeLocation(locationText: string): Promise<{ lat: numb
 }
 
 /**
+ * Realiza reverse geocoding (coordenadas -> dirección) usando Nominatim
+ */
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse`;
+    const params = new URLSearchParams({
+      lat: lat.toString(),
+      lon: lng.toString(),
+      format: 'json',
+      addressdetails: '1',
+      'accept-language': 'es'
+    });
+    
+    const response = await fetch(`${url}?${params.toString()}`, {
+      headers: {
+        'User-Agent': 'OSM-Finder-App/1.0 (https://github.com/amayaeguizabal7/app-chatgpt)'
+      }
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (!data || !data.address) {
+      return null;
+    }
+    
+    // Construir dirección desde los componentes de address
+    const addr = data.address;
+    const addressParts: string[] = [];
+    
+    // Prioridad: calle + número
+    if (addr.road) {
+      addressParts.push(addr.road);
+      if (addr.house_number) {
+        addressParts.push(addr.house_number);
+      }
+    } else if (addr.pedestrian) {
+      addressParts.push(addr.pedestrian);
+    } else if (addr.footway) {
+      addressParts.push(addr.footway);
+    }
+    
+    // Añadir ciudad o municipio
+    if (addr.city) {
+      addressParts.push(addr.city);
+    } else if (addr.town) {
+      addressParts.push(addr.town);
+    } else if (addr.municipality) {
+      addressParts.push(addr.municipality);
+    } else if (addr.village) {
+      addressParts.push(addr.village);
+    }
+    
+    // Si tenemos al menos calle o ciudad, devolverla
+    if (addressParts.length > 0) {
+      return addressParts.join(', ');
+    }
+    
+    // Fallback: usar display_name pero solo si contiene información útil
+    if (data.display_name && !data.display_name.includes(lat.toString()) && !data.display_name.includes(lng.toString())) {
+      return data.display_name;
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('Error en reverse geocoding:', error);
+    return null;
+  }
+}
+
+/**
  * Calcula la distancia entre dos puntos usando la fórmula de Haversine
  */
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -240,6 +315,18 @@ function extractPlaceTypes(query: string): string[] {
     'veterinary': ['amenity=veterinary'],
     'clínica veterinaria': ['amenity=veterinary'],
     'clinica veterinaria': ['amenity=veterinary'],
+    'iglesia': ['amenity=place_of_worship'],
+    'church': ['amenity=place_of_worship'],
+    'catedral': ['amenity=place_of_worship', 'building=cathedral'],
+    'cathedral': ['amenity=place_of_worship', 'building=cathedral'],
+    'capilla': ['amenity=place_of_worship', 'building=chapel'],
+    'chapel': ['amenity=place_of_worship', 'building=chapel'],
+    'mezquita': ['amenity=place_of_worship', 'religion=muslim'],
+    'mosque': ['amenity=place_of_worship', 'religion=muslim'],
+    'sinagoga': ['amenity=place_of_worship', 'religion=jewish'],
+    'synagogue': ['amenity=place_of_worship', 'religion=jewish'],
+    'templo': ['amenity=place_of_worship'],
+    'temple': ['amenity=place_of_worship'],
   };
 
   const foundTypes: string[] = [];
@@ -279,8 +366,9 @@ function buildOverpassQuery(placeTypes: string[], lat: number, lng: number, radi
 /**
  * Parsea los resultados de Overpass
  */
-function parseOverpassResults(data: any, centerLat: number, centerLng: number): Place[] {
+async function parseOverpassResults(data: any, centerLat: number, centerLng: number): Promise<Place[]> {
   const places: Place[] = [];
+  const reverseGeocodePromises: Array<{place: Partial<Place>, lat: number, lng: number, name: string}> = [];
 
   for (const element of data.elements || []) {
     if (!['node', 'way', 'relation'].includes(element.type)) {
@@ -304,14 +392,56 @@ function parseOverpassResults(data: any, centerLat: number, centerLng: number): 
     // Obtener nombre
     const name = tags.name || tags['name:es'] || tags['name:en'] || tags.ref || 'Sin nombre';
     
-    // Determinar tipo
-    const placeType = tags.amenity || tags.leisure || tags.tourism || tags.shop || 'place';
+    // Determinar tipo - priorizar tags más específicos
+    let placeType: string;
+    if (tags.building && tags.amenity === 'place_of_worship') {
+      // Para lugares de culto, usar el tipo de edificio si está disponible
+      placeType = tags.building;
+    } else {
+      // Usar el orden estándar: amenity, leisure, tourism, shop
+      placeType = tags.amenity || tags.leisure || tags.tourism || tags.shop || tags.building || 'place';
+    }
     
-    // Construir dirección
+    // Construir dirección - intentar múltiples fuentes y tags
     const addressParts: string[] = [];
-    if (tags['addr:street']) addressParts.push(tags['addr:street']);
-    if (tags['addr:housenumber']) addressParts.push(tags['addr:housenumber']);
-    if (tags['addr:city']) addressParts.push(tags['addr:city']);
+    
+    // Prioridad 1: Calle y número (más específico)
+    if (tags['addr:street']) {
+      addressParts.push(tags['addr:street']);
+      if (tags['addr:housenumber']) {
+        addressParts.push(tags['addr:housenumber']);
+      }
+    } else if (tags['addr:place']) {
+      // Si no hay calle, usar lugar
+      addressParts.push(tags['addr:place']);
+    }
+    
+    // Prioridad 2: Añadir información adicional si está disponible
+    if (tags['addr:city']) {
+      addressParts.push(tags['addr:city']);
+    } else if (tags['addr:municipality']) {
+      addressParts.push(tags['addr:municipality']);
+    } else if (tags['addr:town']) {
+      addressParts.push(tags['addr:town']);
+    } else if (tags['addr:village']) {
+      addressParts.push(tags['addr:village']);
+    }
+    
+    // Prioridad 3: Si aún no tenemos nada, intentar desde otros tags
+    if (addressParts.length === 0) {
+      // Intentar desde tags de ubicación alternativos
+      if (tags['addr:suburb']) {
+        addressParts.push(tags['addr:suburb']);
+      }
+      if (tags['addr:district']) {
+        addressParts.push(tags['addr:district']);
+      }
+      if (tags['addr:province']) {
+        addressParts.push(tags['addr:province']);
+      }
+    }
+    
+    // Construir dirección final
     const address = addressParts.length > 0 ? addressParts.join(', ') : undefined;
     
     // URL de OSM
@@ -322,21 +452,72 @@ function parseOverpassResults(data: any, centerLat: number, centerLng: number): 
     // Calcular distancia
     const distanceMeters = calculateDistance(centerLat, centerLng, lat, lng);
     
-    places.push({
+    // Extraer teléfono de los tags (prioridad: phone > contact:phone > addr:phone > contact:mobile)
+    const phone = tags.phone || tags['contact:phone'] || tags['addr:phone'] || tags['contact:mobile'] || undefined;
+    
+    // Si no hay dirección desde tags, guardar para hacer reverse geocoding después
+    let finalAddress = address;
+    const placeData: Partial<Place> = {
       name,
       lat,
       lng,
       type: placeType,
       tags,
-      address,
+      phone,
       osm_id: osmId,
       osm_type: osmType,
       osm_url: osmUrl,
-      display_name: address ? `${name} - ${address}` : name,
       distance_meters: distanceMeters
-    });
+    };
+    
+    if (!finalAddress) {
+      // Guardar para hacer reverse geocoding en paralelo después
+      reverseGeocodePromises.push({
+        place: placeData,
+        lat,
+        lng,
+        name
+      });
+      placeData.address = undefined;
+    } else {
+      placeData.address = finalAddress;
+    }
+    
+    // Construir display_name
+    placeData.display_name = finalAddress || name;
+    
+    places.push(placeData as Place);
   }
 
+  // Hacer reverse geocoding en paralelo para lugares sin dirección
+  if (reverseGeocodePromises.length > 0) {
+    const reverseResults = await Promise.allSettled(
+      reverseGeocodePromises.map(async ({ place, lat, lng, name }) => {
+        try {
+          const reverseAddress = await reverseGeocode(lat, lng);
+          if (reverseAddress && reverseAddress !== name) {
+            return { osmId: place.osm_id, address: reverseAddress };
+          }
+          return { osmId: place.osm_id, address: null };
+        } catch (error) {
+          console.warn(`Error al hacer reverse geocoding para ${name}:`, error);
+          return { osmId: place.osm_id, address: null };
+        }
+      })
+    );
+    
+    // Actualizar las direcciones en los lugares
+    reverseResults.forEach((result) => {
+      if (result.status === 'fulfilled' && result.value.address) {
+        const placeIndex = places.findIndex(p => p.osm_id === result.value.osmId);
+        if (placeIndex !== -1) {
+          places[placeIndex].address = result.value.address;
+          places[placeIndex].display_name = result.value.address;
+        }
+      }
+    });
+  }
+  
   // Ordenar por distancia
   places.sort((a, b) => a.distance_meters - b.distance_meters);
   
@@ -393,8 +574,8 @@ export async function searchPlaces(
 
     const data = await response.json();
     
-    // Parsear resultados
-    const places = parseOverpassResults(data, centerLat, centerLng);
+    // Parsear resultados (ahora es async)
+    const places = await parseOverpassResults(data, centerLat, centerLng);
     
     return {
       places,

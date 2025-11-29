@@ -9,6 +9,7 @@ export interface Place {
   type: string;
   tags: Record<string, string>;
   address?: string;
+  phone?: string;
   osm_id: number;
   osm_type: string;
   osm_url: string;
@@ -36,4 +37,5 @@ export interface SearchResults {
 }
 
 export type SearchStatus = 'idle' | 'loading' | 'success' | 'error';
+
 

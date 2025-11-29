@@ -68,3 +68,4 @@ Convierte coordenadas en dirección.
 - `src/nominatim_client.py`: Cliente para geocodificación
 - `main.py`: Punto de entrada
 
+

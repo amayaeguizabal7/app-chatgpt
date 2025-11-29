@@ -40,3 +40,4 @@ Los archivos compilados estarán en `dist/`.
 - **Leaflet** (mapas)
 - **OpenAI Apps SDK** (integración con ChatGPT)
 
+

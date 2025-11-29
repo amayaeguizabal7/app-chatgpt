@@ -97,6 +97,13 @@
   line-height: 1.25rem;
 }
 
+.result-item-phone {
+  font-size: 0.8125rem;
+  color: hsl(215.4, 16.3%, 46.9%);
+  margin-bottom: 0.5rem;
+  line-height: 1.25rem;
+}
+
 .result-item-footer {
   margin-top: 0.75rem;
   padding-top: 0.75rem;

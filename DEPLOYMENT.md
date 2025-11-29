@@ -182,3 +182,4 @@ No requiere variables de entorno por defecto.
 4. **Agregar autocompletado** en el campo de búsqueda
 5. **Mejorar la UI** con más detalles de cada lugar
 
+
